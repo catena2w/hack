@@ -85,3 +85,33 @@ curl -X POST --header 'Content-Type: application/json' --header 'Accept: applica
   "timestamp": 1478961613055,
   "signature": "Z9RrUoBteKRCTGt5sxrDopy4iS1pzA3RFaduu5df1nXVLAFaaDyNXB6TrzxCKJYpR4NgayagTxUbuRU1L3ZeVwK"
 }
+
+#5. Перевод ассетов: 
+
+###request
+
+curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' -d '{ \ 
+    "sender": "3N8YmBwT2tTyMNEfyAiyvZtvT99dVmSFRWd", \ 
+    "assetIdOpt": "BJJWPgqaSCd6SK8huDKHC7tuH6vwtezKCQjfGkZxreYP", \ 
+    "recipient": "3N9R13Htt2PKHSace2V6be1DYEjaSKWATLc", \ 
+    "amount": 10, \ 
+    "feeAmount": 100000, \ 
+    "attachment": "base" \ 
+  }' 'http://88.198.13.202:6869/assets/transfer'
+  
+###response
+
+{
+  "type": 4,
+  "id": "8AqoNUbmKU4nZFB5ihtWnC1JH268TJxpUdqG1HMTJmW1",
+  "sender": "3N8YmBwT2tTyMNEfyAiyvZtvT99dVmSFRWd",
+  "senderPublicKey": "6bCWffMrLLV2QfBqi3qPQuk6Voy2eBUCD5RVMjsSKn3b",
+  "recipient": "3N9R13Htt2PKHSace2V6be1DYEjaSKWATLc",
+  "assetId": "BJJWPgqaSCd6SK8huDKHC7tuH6vwtezKCQjfGkZxreYP",
+  "amount": 10,
+  "feeAsset": null,
+  "fee": 100000,
+  "timestamp": 1478967733790,
+  "attachment": "base",
+  "signature": "2FkoC24fBBZPYG7CW2tV2vp4rouxczvJQe1FqTDwNeEji6SJmyJLN7hLdVsjkxAnu7BFY2E8i7Y6CsY7XwK4vhKT"
+}
