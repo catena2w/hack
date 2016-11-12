@@ -1,6 +1,5 @@
 import dispatch.{Http, url}
 import play.api.libs.json.{JsValue, Json}
-import scorex.utils.ScorexLogging
 
 import scala.annotation.tailrec
 import scala.collection.concurrent.TrieMap
@@ -21,7 +20,7 @@ object Hack extends App with ScorexLogging {
 
   @tailrec
   def loop(lastProcessedBlock: Int): Unit = {
-    val myAddresses: Seq[String] = ???
+    val myAddresses: Seq[String] = getRequest("/addresses").as[Seq[String]]
 
     //    Запрашиваем высоту блокчейна
     val height = (getRequest("/blocks/height") \ "height").as[Int]
@@ -32,10 +31,14 @@ object Hack extends App with ScorexLogging {
       val block = getRequest(s"/blocks/at/$blockN")
       val transactionsJS = (block \ "transactions").as[List[JsValue]]
       transactionsJS.foreach { txJs =>
-        //Ищем нововыпущенные токены
-        if ((txJs \ "recipient"))
-
-        if ((txJs \ "recipient").asOpt[String].contains(myAddress)) {
+        //Ищем нововыпущенные токены с наших адресов
+        if ((txJs \ "sender").asOpt[String].exists(s => myAddresses.contains(s))) {
+          addressAssets.put((txJs \ "sender").as[String], (txJs \ "assetId").as[String])
+        }
+        //Ищем переводы на наш адрес
+        if ((txJs \ "recipient").asOpt[String].exists(s => myAddresses.contains(s))) {
+          val myAddress = (txJs \ "recipient").as[String]
+          val myAssetId = addressAssets.get(myAddress).get
           val amount = (txJs \ "amount").as[Long]
           val sender = (txJs \ "sender").as[String]
           val receivedAssetId = (txJs \ "assetId").asOpt[String]
@@ -43,10 +46,7 @@ object Hack extends App with ScorexLogging {
 
           if (receivedAssetId.isEmpty) {
             //    Если нам пришли Waves – шлем в ответ (или на адрес из attachment) ассеты
-            sendAsset((amount * Coeff).toInt, sender, Some(myAssetId))
-          } else if (receivedAssetId.contains(myAssetId)) {
-            //    Если пришли ассеты – шлем в ответ Waves
-            sendAsset((amount * Coeff).toInt, sender, None)
+            sendAsset((amount * Coeff).toInt, myAddress, sender, Some(myAssetId))
           }
         }
       }
@@ -59,10 +59,10 @@ object Hack extends App with ScorexLogging {
   loop(InitialHeight)
 
 
-  def sendAsset(amount: Int, recepient: String, assetId: Option[String]): Unit = {
+  def sendAsset(amount: Int, myAddress: String, recipient: String, assetId: Option[String]): Unit = {
     val assetIdStr = assetId.map(a => "\"assetIdOpt\": \"" + a + "\",").getOrElse("")
 
-    val json = "{\"recipient\": \"" + recepient + "\" " + assetIdStr + ", \"feeAmount\": 100000, \"amount\": " +
+    val json = "{\"recipient\": \"" + recipient + "\" " + assetIdStr + ", \"feeAmount\": 100000, \"amount\": " +
       amount + ", \"attachment\": \"base\", \"sender\": \"" + myAddress + "\"} "
     log.info("Transaction sended:" + postRequest("/assets/transfer", body = json))
   }
