@@ -1,4 +1,5 @@
 import dispatch.{Http, url}
+import org.slf4j.LoggerFactory
 import play.api.libs.json.{JsValue, Json}
 
 import scala.annotation.tailrec
@@ -12,10 +13,10 @@ object Hack extends App with ScorexLogging {
   val Peer: String = "http://88.198.13.202:6869"
   val Headers: Map[String, String] = Map()
   //  val Headers: Map[String, String] = Map("api_key" -> "hsepassword")
-  val InitialHeight = 1000
-  val N = 1
+  val InitialHeight = 1876
+  val Confirmations = 1
   val Coeff: Double = 1
-  //Соответствие аддреса и it токена, которым он оперирует
+  //Соответствие аддреса и id токена, которым он оперирует
   val addressAssets: TrieMap[String, String] = TrieMap()
 
   @tailrec
@@ -25,24 +26,27 @@ object Hack extends App with ScorexLogging {
     //    Запрашиваем высоту блокчейна
     val height = (getRequest("/blocks/height") \ "height").as[Int]
     //    Запрашиваем блоки от последнего обработанного до Height-N
-    (lastProcessedBlock until (height - N)) foreach { blockN =>
+    (lastProcessedBlock until (height - Confirmations)) foreach { blockN =>
       log.info(s"Processing block $blockN")
 
       val block = getRequest(s"/blocks/at/$blockN")
       val transactionsJS = (block \ "transactions").as[List[JsValue]]
       transactionsJS.foreach { txJs =>
         //Ищем нововыпущенные токены с наших адресов
-        if ((txJs \ "sender").asOpt[String].exists(s => myAddresses.contains(s))) {
+        if ((txJs \ "type").asOpt[Int].contains(3) &&
+          (txJs \ "sender").asOpt[String].exists(s => myAddresses.contains(s))) {
+          log.info(s"Found issue transaction $txJs")
           addressAssets.put((txJs \ "sender").as[String], (txJs \ "assetId").as[String])
         }
         //Ищем переводы на наш адрес
-        if ((txJs \ "recipient").asOpt[String].exists(s => myAddresses.contains(s))) {
+        if ((txJs \ "recipient").asOpt[String].exists(s => myAddresses.contains(s)) &&
+          !(txJs \ "sender").asOpt[String].exists(s => myAddresses.contains(s))) {
+          log.info(s"Received Waves $txJs")
           val myAddress = (txJs \ "recipient").as[String]
           val myAssetId = addressAssets.get(myAddress).get
           val amount = (txJs \ "amount").as[Long]
           val sender = (txJs \ "sender").as[String]
           val receivedAssetId = (txJs \ "assetId").asOpt[String]
-          log.info(s"Got transaction $txJs).asOpt[String]}")
 
           if (receivedAssetId.isEmpty) {
             //    Если нам пришли Waves – шлем в ответ (или на адрес из attachment) ассеты
@@ -53,7 +57,7 @@ object Hack extends App with ScorexLogging {
     }
 
     Thread.sleep(10000)
-    loop(height - N)
+    loop(height - Confirmations)
   }
 
   loop(InitialHeight)

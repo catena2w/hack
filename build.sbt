@@ -7,6 +7,8 @@ version := "0.1.0"
 scalaVersion := "2.11.8"
 
 libraryDependencies ++= Seq(
+  "ch.qos.logback" % "logback-classic" % "1.+",
+  "org.slf4j" % "slf4j-api" % "1.+",
   "com.typesafe.play" %% "play-json" % "2.+",
   "net.databinder.dispatch" %% "dispatch-core" % "0.+"
 )
