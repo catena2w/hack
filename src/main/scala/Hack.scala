@@ -13,7 +13,7 @@ object Hack extends App with ScorexLogging {
   val Peer: String = "http://88.198.13.202:6869"
   val Headers: Map[String, String] = Map()
   //  val Headers: Map[String, String] = Map("api_key" -> "hsepassword")
-  val InitialHeight = 1876
+  val InitialHeight = 2115
   val Confirmations = 1
   val Coeff: Double = 1
   //Соответствие аддреса и id токена, которым он оперирует
@@ -66,9 +66,9 @@ object Hack extends App with ScorexLogging {
   def sendAsset(amount: Int, myAddress: String, recipient: String, assetId: Option[String]): Unit = {
     val assetIdStr = assetId.map(a => "\"assetIdOpt\": \"" + a + "\",").getOrElse("")
 
-    val json = "{\"recipient\": \"" + recipient + "\" " + assetIdStr + ", \"feeAmount\": 100000, \"amount\": " +
+    val json = "{\"recipient\": \"" + recipient + "\", " + assetIdStr + " \"feeAmount\": 100000, \"amount\": " +
       amount + ", \"attachment\": \"base\", \"sender\": \"" + myAddress + "\"} "
-    log.info("Transaction sended:" + postRequest("/assets/transfer", body = json))
+    log.info(s"Transaction $json sended: ${postRequest("/assets/transfer", body = json)}")
   }
 
   def getRequest(us: String): JsValue = {
